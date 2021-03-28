@@ -22,8 +22,13 @@ public class Controller {
 		try {
 			Socket socket = new Socket( ipAddress, port );
 			if(socket.isConnected()) {
+				PrintWriter out = new PrintWriter( socket.getOutputStream() );
+				out.println("DIR ");
+				out.flush();
 				Scanner in = new Scanner( socket.getInputStream() );
-				System.out.println( in.nextLine() );
+				while(in.hasNext()) {
+					System.out.println( in.nextLine() );
+				}
 			}
 		}catch (Exception e){
 			e.printStackTrace();

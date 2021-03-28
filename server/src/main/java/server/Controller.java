@@ -16,19 +16,26 @@ public class Controller {
 	private static TextArea staticLogArea;
 
 	private ListenServer server;
+	Thread serverThread;
 
-	private final int PORT = 556;									//change if getting allready in use errors
+	private final int PORT = 556;									//change if getting already in use errors
+	private final static String sharedDirectory = "./sharedData";
 
 	public void initialize(){
 		staticLogArea = logTextArea;
 		statusLabel.setText("Running on port " + PORT + ".");
 		server = new ListenServer( PORT );
-		Thread serverThread = new Thread(server, "Server Thread");
+		serverThread = new Thread(server, "Server Thread");
 		serverThread.start();
 	}
 
 	public static void log(String text){
 		staticLogArea.appendText( LocalDateTime.now() + " - "+ text + "\n" );
 	}
+
+	public static String getSharedDirectory(){
+		return sharedDirectory;
+	}
+
 
 }

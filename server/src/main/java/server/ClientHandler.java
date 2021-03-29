@@ -56,7 +56,8 @@ public class ClientHandler implements Runnable{
 		if(file.isDirectory()){
 			File subFiles[] = file.listFiles();
 			for ( File currentFile:subFiles ) {
-				out.println(currentFile.getPath());
+
+				out.println( currentFile.getPath() );
 			}
 		}else{
 			Controller.log("ERROR: Common directory does not exist");

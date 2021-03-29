@@ -17,7 +17,7 @@
         <Label text="IP:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
         <TextField fx:id="ipField" text="127.0.0.1" promptText="IP ADDRESS" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
         <Label text="Port:" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
-        <TextField fx:id="portField" text="556" promptText="PORT" GridPane.rowIndex="0" GridPane.columnIndex="3"/>
+        <TextField fx:id="portField" text="555" promptText="PORT" GridPane.rowIndex="0" GridPane.columnIndex="3"/>
     </GridPane>
 
     <HBox GridPane.columnSpan="4" GridPane.rowIndex="1">
@@ -27,7 +27,7 @@
     </HBox>
 
     <GridPane alignment="CENTER" hgap="10">
-        <ListView GridPane.columnIndex="0" fx:id="clientListView"/>
-        <ListView GridPane.columnIndex="1" fx:id="serverListView"/>
+        <ListView GridPane.columnIndex="0" fx:id="clientListView" prefWidth="999999" prefHeight="99999999"/>
+        <ListView GridPane.columnIndex="1" fx:id="serverListView" prefWidth="999999" prefHeight="99999999"/>
     </GridPane>
 </VBox>

@@ -33,6 +33,8 @@ public class Controller {
 	public void initialize(){
 		clientListView.itemsProperty().bind( clientListProperty );
 		serverListView.itemsProperty().bind( serverListProperty );
+		serverListProperty.set(serverList);
+		clientListProperty.set(clientList);
 	}
 
 	public void handleRefreshButton( ActionEvent event ){
@@ -74,9 +76,67 @@ public class Controller {
 
 
 	public void handleDownloadButton( ActionEvent event ) {
+		//get selected file
+		String selectedPath = (String)serverListView.getSelectionModel().getSelectedItem();
+
+		if(!selectedPath.isEmpty()){
+			Socket socket = openSocket();
+			try {
+				//Prep the streams
+				Scanner in = new Scanner( socket.getInputStream() );
+				PrintWriter netOut = new PrintWriter( socket.getOutputStream() );
+
+				File outputFile = new File(selectedPath);
+				PrintWriter fileOut = new PrintWriter( outputFile );
+
+				//Send the download command, expect text stream of file contents back;
+				netOut.println("DOWNLOAD "+ outputFile);
+				netOut.flush();
+				while(in.hasNext()){
+					fileOut.println(in.nextLine());
+				}
+				fileOut.flush();
+				fileOut.close();
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+
+			//Update the lists
+			handleRefreshButton( event );
+		}
+
 	}
 
 	public void handleUploadButton( ActionEvent event ) {
+		//get selected file
+		String selectedPath = (String)clientListView.getSelectionModel().getSelectedItem();
+		File selectedFile = new File(selectedPath);
+
+		if(selectedFile.exists()){
+			try{
+				//prep the text streams
+				Socket socket = openSocket();
+				Scanner in = new Scanner( selectedFile );
+				PrintWriter out = new PrintWriter( socket.getOutputStream() );
+
+				//Send the upload command, then send all the text
+				out.println("UPLOAD " + selectedPath);
+
+				while(in.hasNextLine()){
+					out.println(in.nextLine());
+				}
+				out.flush();
+				in.close();
+				socket.close();
+
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+		}else{
+			System.err.println("ERROR: File does not exist");
+		}
+		//Update the lists
+		handleRefreshButton( event );
 	}
 
 	/**

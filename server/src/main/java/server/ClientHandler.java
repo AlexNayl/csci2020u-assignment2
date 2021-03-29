@@ -23,7 +23,7 @@ public class ClientHandler implements Runnable{
 		try{
 			in = new Scanner(socket.getInputStream());
 			out = new PrintWriter( socket.getOutputStream() );
-			Controller.log("Handling request from " + socket);
+			//Controller.log("Handling request from " + socket);
 
 			//Get command and execute appropriate function
 			String command = in.next();
@@ -69,14 +69,47 @@ public class ClientHandler implements Runnable{
 	 * handle upload command, saves incoming text stream as file
 	 */
 	private void handleUpload(){
-		Controller.log("Handling directory request from " + socket);
+		//The rest of the command line should be the path
+		String path = in.nextLine().trim();
+		Controller.log("Handling upload request from " + socket + " \"" + path + "\"");
+
+		File file = new File(path);
+		try {
+			PrintWriter fileOut = new PrintWriter( file );
+
+			while ( in.hasNext() ) {
+				fileOut.println( in.nextLine() );
+			}
+			fileOut.flush();
+			fileOut.close();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
 	}
 
 	/**
 	 * handle download command, gets file and returns text stream of file
 	 */
 	private void handleDownload(){
-		Controller.log("Handling directory request from " + socket);
+		//The rest of the command line should be the path
+		String path = in.nextLine().trim();
+
+		Controller.log("Handling download request from " + socket + " \"" + path + "\"");
+
+		File file = new File(path);
+		if(file.exists()){
+			try {
+				Scanner scanner = new Scanner( file );
+				while( scanner.hasNext() ) {
+					out.println( scanner.nextLine() );
+				}
+				out.flush();
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+		}else{
+			Controller.log("ERROR: File does not exist");
+		}
 	}
 
 }

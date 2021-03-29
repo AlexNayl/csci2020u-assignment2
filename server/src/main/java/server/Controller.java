@@ -18,7 +18,7 @@ public class Controller {
 	private ListenServer server;
 	Thread serverThread;
 
-	private final int PORT = 556;									//change if getting already in use errors
+	private final int PORT = 555;									//change if getting already in use errors
 	private final static String sharedDirectory = "./sharedData";
 
 	public void initialize(){

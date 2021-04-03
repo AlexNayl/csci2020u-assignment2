@@ -1,6 +1,7 @@
 package server;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -16,6 +17,11 @@ public class Main extends Application {
         primaryStage.setTitle("Server");
         primaryStage.setScene(new Scene(root, 600, 600));
         primaryStage.show();
+    }
+
+    @Override
+    public void stop(){
+        System.exit(0);        //Forces the server thread to stop when the window closes
     }
 
 

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.URI;
 import java.util.Scanner;
 
 /**
@@ -38,6 +39,7 @@ public class ClientHandler implements Runnable{
 
 		}catch(Exception e){
 			Controller.log( "ERROR: " + e.getMessage() );
+			e.printStackTrace();
 		} finally {
 			try{
 				socket.close();
@@ -50,14 +52,20 @@ public class ClientHandler implements Runnable{
 	/**
 	 * handle directory command and reply's with list of files
 	 */
-	private void handleDir(){
+	private void handleDir() throws Exception{
 		Controller.log("Handling directory request from " + socket);
 		File file = new File( Controller.getSharedDirectory() );
 		if(file.isDirectory()){
 			File subFiles[] = file.listFiles();
 			for ( File currentFile:subFiles ) {
+				if( !currentFile.isDirectory() ) {
+					//Convert file to relative path so user cant see the server file structure
+					URI filePath = currentFile.toURI();
+					URI commonPath = Controller.getSharedDirectory();
+					URI relativePath = commonPath.relativize( filePath );
 
-				out.println( currentFile.getPath() );
+					out.println( relativePath.getPath() );
+				}
 			}
 		}else{
 			Controller.log("ERROR: Common directory does not exist");
@@ -69,21 +77,31 @@ public class ClientHandler implements Runnable{
 	 * handle upload command, saves incoming text stream as file
 	 */
 	private void handleUpload(){
+		File file = null;
 		//The rest of the command line should be the path
 		String path = in.nextLine().trim();
 		Controller.log("Handling upload request from " + socket + " \"" + path + "\"");
 
-		File file = new File(path);
 		try {
-			PrintWriter fileOut = new PrintWriter( file );
-
-			while ( in.hasNext() ) {
-				fileOut.println( in.nextLine() );
-			}
-			fileOut.flush();
-			fileOut.close();
+			//Convert local path to absolute path
+			URI localFile = new URI( path);
+			file = new File(Controller.getSharedDirectory().resolve(localFile));
 		}catch(Exception e){
-			e.printStackTrace();
+			Controller.log("ERROR: path inparsable:");
+		}
+
+		if(file != null) {
+			try {
+				PrintWriter fileOut = new PrintWriter( file );
+
+				while ( in.hasNext() ) {
+					fileOut.println( in.nextLine() );
+				}
+				fileOut.flush();
+				fileOut.close();
+			} catch ( Exception e ) {
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -91,12 +109,21 @@ public class ClientHandler implements Runnable{
 	 * handle download command, gets file and returns text stream of file
 	 */
 	private void handleDownload(){
+		File file = new File("");
 		//The rest of the command line should be the path
 		String path = in.nextLine().trim();
 
 		Controller.log("Handling download request from " + socket + " \"" + path + "\"");
+		try {
+			//Convert local path to absolute path
+			URI localFile = new URI( path );
+			localFile = Controller.getSharedDirectory().resolve(localFile);
+			file = new File(localFile);
+		}catch(Exception e){
+			Controller.log("ERROR: path un-parsable");
+			e.printStackTrace();
+		}
 
-		File file = new File(path);
 		if(file.exists()){
 			try {
 				Scanner scanner = new Scanner( file );

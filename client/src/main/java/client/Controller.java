@@ -7,17 +7,22 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 
 import java.io.File;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.URI;
 import java.util.Scanner;
 
 public class Controller {
+	@FXML TextField directoryField;
 	@FXML ListView clientListView;
 	@FXML ListView serverListView;
 	@FXML TextField ipField;
@@ -28,9 +33,14 @@ public class Controller {
 	ListProperty<String> clientListProperty = new SimpleListProperty<>();
 	ListProperty<String> serverListProperty = new SimpleListProperty<>();
 
-	private static final String sharedDirectory = "./sharedData";
+	private static URI sharedDirectory;
+	private final static String DEFAULT_SHARED_DIRECTORY = "./sharedData";
 
 	public void initialize(){
+		//Convert relative path above into absolute URI for later
+		sharedDirectory  = new File(DEFAULT_SHARED_DIRECTORY).toPath().toAbsolutePath().toUri().normalize();
+		directoryField.setText( sharedDirectory.getPath() );
+
 		clientListView.itemsProperty().bind( clientListProperty );
 		serverListView.itemsProperty().bind( serverListProperty );
 		serverListProperty.set(serverList);
@@ -62,7 +72,9 @@ public class Controller {
 				File sharedFile = new File(sharedDirectory);
 				if(sharedFile.isDirectory()){
 					for(File currentFile : sharedFile.listFiles()){
-						clientList.add(currentFile.getPath());
+						URI currentURI = sharedDirectory.relativize( currentFile.toURI() );		//Convert to relative path
+
+						clientList.add(currentURI.getPath());
 					}
 				}
 
@@ -86,11 +98,13 @@ public class Controller {
 				Scanner in = new Scanner( socket.getInputStream() );
 				PrintWriter netOut = new PrintWriter( socket.getOutputStream() );
 
-				File outputFile = new File(selectedPath);
+				//Convert path to absolute path and open file at that location
+				URI selectedURI = sharedDirectory.resolve( selectedPath );
+				File outputFile = new File(selectedURI);
 				PrintWriter fileOut = new PrintWriter( outputFile );
 
 				//Send the download command, expect text stream of file contents back;
-				netOut.println("DOWNLOAD "+ outputFile);
+				netOut.println("DOWNLOAD "+ selectedPath);
 				netOut.flush();
 				while(in.hasNext()){
 					fileOut.println(in.nextLine());
@@ -110,10 +124,15 @@ public class Controller {
 	public void handleUploadButton( ActionEvent event ) {
 		//get selected file
 		String selectedPath = (String)clientListView.getSelectionModel().getSelectedItem();
-		File selectedFile = new File(selectedPath);
 
-		if(selectedFile.exists()){
-			try{
+		//Convert local path to absolute and open the file
+		try{
+			URI selectedURI = new URI( selectedPath );
+			selectedURI = sharedDirectory.resolve( selectedURI );
+			File selectedFile = new File(selectedURI);
+
+			if(selectedFile.exists()){
+
 				//prep the text streams
 				Socket socket = openSocket();
 				Scanner in = new Scanner( selectedFile );
@@ -129,11 +148,12 @@ public class Controller {
 				in.close();
 				socket.close();
 
-			}catch(Exception e){
-				e.printStackTrace();
+
+			}else{
+				System.err.println("CLIENT: File does not exist");
 			}
-		}else{
-			System.err.println("ERROR: File does not exist");
+		}catch(Exception e){
+			e.printStackTrace();
 		}
 		//Update the lists
 		handleRefreshButton( event );
@@ -157,5 +177,30 @@ public class Controller {
 	}
 
 	private void updateListViews(){
+	}
+
+	public void handleDirectoryButton( ActionEvent actionEvent ) {
+		//Get the current stage
+		Node node = (Node) actionEvent.getSource();
+		Stage thisStage = (Stage) node.getScene().getWindow();
+
+		//Get current directory
+		File currentDirectory = new File( sharedDirectory );
+		if ( !currentDirectory.isDirectory() ) {
+			currentDirectory = new File( "." );
+		}
+
+		//Prompt user
+		DirectoryChooser directoryChooser = new DirectoryChooser();
+		directoryChooser.setInitialDirectory( currentDirectory );
+		File newDirectory = directoryChooser.showDialog( thisStage );
+
+		//Check and save result
+		if ( newDirectory != null ){
+			//Converts it to an absolut URI
+			sharedDirectory = newDirectory.toPath().toAbsolutePath().toUri().normalize();
+
+			directoryField.setText( sharedDirectory.getPath() );
+		}
 	}
 }

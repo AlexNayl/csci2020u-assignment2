@@ -20,6 +20,13 @@
         <TextField fx:id="portField" text="555" promptText="PORT" GridPane.rowIndex="0" GridPane.columnIndex="3"/>
     </GridPane>
 
+    <GridPane alignment="center" hgap="10" vgap="10">
+        <Label text="Directory:"/>
+        <TextField fx:id="directoryField" GridPane.columnIndex="1" prefWidth="400" editable="false"/>
+        <Button onAction="#handleDirectoryButton" text="Change" GridPane.columnIndex="2"/>
+    </GridPane>
+
+
     <HBox GridPane.columnSpan="4" GridPane.rowIndex="1">
         <Button text="Refresh" onAction="#handleRefreshButton"/>
         <Button text="Download" onAction="#handleDownloadButton"/>
